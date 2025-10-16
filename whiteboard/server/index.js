@@ -1,10 +1,17 @@
-import express from "express";
-import http from "http";
-import { Server } from "socket.io";
-import cors from "cors";
+const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
+const cors = require("cors");
+const path = require("path");
+
+
+
 
 const app = express();
 app.use(cors());
+
+// Serve frontend build
+app.use(express.static(path.join(__dirname, "../client/dist")));
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -60,6 +67,11 @@ io.on("connection", (socket) => {
     });
 
     socket.on("disconnect", () => console.log("🔴 User disconnected:", socket.id));
+});
+
+// Serve the frontend app (React build)
+app.use((req, res) => {
+    res.sendFile(path.join(__dirname, "../client/dist/index.html"));
 });
 
 const PORT = process.env.PORT || 5174;
