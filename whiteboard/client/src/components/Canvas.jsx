@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { io } from "socket.io-client";
-const socket = io("http://localhost:5174"); // connect to backend
 
 
-export default function Canvas() {
+export default function Canvas({ socket, roomId }) {
     const canvasRef = useRef(null);
     const [isDrawing, setIsDrawing] = useState(false);
     const [color, setColor] = useState("#5ac8fa");
@@ -67,7 +65,7 @@ export default function Canvas() {
 
         ctx.lineTo(pos.x, pos.y);
         ctx.stroke();
-        socket.emit("draw", { x: pos.x, y: pos.y, color, size, mode });
+        socket.emit("draw", roomId, { x: pos.x, y: pos.y, color, size, mode });
 
     };
 
@@ -79,8 +77,9 @@ export default function Canvas() {
         const canvas = canvasRef.current;
         const ctx = canvas.getContext("2d");
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        socket.emit("clear");
+        socket.emit("clear", roomId);
     };
+
     const saveAsImage = () => {
         const canvas = canvasRef.current;
         const link = document.createElement("a");
