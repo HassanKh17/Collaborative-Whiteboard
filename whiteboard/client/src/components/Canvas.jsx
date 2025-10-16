@@ -1,4 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import { io } from "socket.io-client";
+const socket = io("http://localhost:5174"); // connect to backend
+
 
 export default function Canvas() {
     const canvasRef = useRef(null);
@@ -6,6 +9,7 @@ export default function Canvas() {
     const [color, setColor] = useState("#5ac8fa");
     const [size, setSize] = useState(4);
     const [mode, setMode] = useState("draw"); // or "erase"
+    const lastEmitRef = useRef(0);
 
     // Adjust canvas size to fill parent
     useEffect(() => {
@@ -42,6 +46,11 @@ export default function Canvas() {
 
     const draw = (e) => {
         if (!isDrawing) return;
+
+        const now = Date.now();
+        if (now - lastEmitRef.current < 10) return; // limit to 100fps
+        lastEmitRef.current = now;
+
         const pos = getPos(e);
         const ctx = canvasRef.current.getContext("2d");
 
@@ -58,6 +67,8 @@ export default function Canvas() {
 
         ctx.lineTo(pos.x, pos.y);
         ctx.stroke();
+        socket.emit("draw", { x: pos.x, y: pos.y, color, size, mode });
+
     };
 
     const stopDrawing = () => {
@@ -68,6 +79,7 @@ export default function Canvas() {
         const canvas = canvasRef.current;
         const ctx = canvas.getContext("2d");
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        socket.emit("clear");
     };
     const saveAsImage = () => {
         const canvas = canvasRef.current;
@@ -76,6 +88,34 @@ export default function Canvas() {
         link.href = canvas.toDataURL("image/png");
         link.click();
     };
+
+    // Listen for events from others
+    useEffect(() => {
+        const ctx = canvasRef.current.getContext("2d");
+
+        socket.on("draw", ({ x, y, color, size, mode }) => {
+            ctx.lineWidth = size;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            if (mode === "erase") {
+                ctx.globalCompositeOperation = "destination-out";
+            } else {
+                ctx.globalCompositeOperation = "source-over";
+                ctx.strokeStyle = color;
+            }
+            ctx.lineTo(x, y);
+            ctx.stroke();
+        });
+
+        socket.on("clear", () => {
+            ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+        });
+
+        return () => {
+            socket.off("draw");
+            socket.off("clear");
+        };
+    }, []);
 
 
     return (
