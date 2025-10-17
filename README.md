@@ -107,23 +107,16 @@ http://localhost:5174
 
 ---
 
-## 🌍 Deployment on Render
+## 🌍 Live Demo
 
-For deployment with Render, use the following settings:
+You can try out the collaborative whiteboard here:
 
-- **Root Directory:** `whiteboard/server`  
-- **Build Command:**
-  ```bash
-  npm install --production=false --prefix ../client && npm run build --prefix ../client && npm install
-  ```
-- **Start Command:**
-  ```bash
-  node index.js
-  ```
+👉 **[https://collaborative-whiteboard-55kr.onrender.com](https://collaborative-whiteboard-55kr.onrender.com)**  
 
-Your Express server will automatically serve the built React app and handle Socket.IO connections.
+No installation required — just open the link, start drawing, and share your room link with friends to collaborate in real time!
 
 ---
+
 
 ## 📡 How It Works
 
